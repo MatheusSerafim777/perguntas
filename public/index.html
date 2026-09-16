@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#205c4b">
+  <meta name="description" content="Perguntas e respostas para sua reunião de diagnóstico de dados.">
+  <title>Perguntas e respostas — Mapa de dados</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Pular para as perguntas</a>
+  <div class="workspace">
+    <header class="page-header">
+      <div class="heading-row">
+        <div><p class="eyebrow">Mapa de dados</p><h1>Perguntas e respostas</h1></div>
+        <button class="button" id="export-button" hidden>Exportar</button>
+      </div>
+      <p class="intro">Um roteiro simples para registrar suas perguntas e respostas.</p>
+      <div class="status-row"><span id="answered-count">0 de 20 respondidas</span><span id="save-status" role="status">Carregando…</span></div>
+      <button id="import-local" class="text-button" hidden>Importar caderno deste navegador</button>
+    </header>
+    <main id="main" tabindex="-1">
+      <div id="storage-warning" class="notice" role="alert" hidden></div>
+      <div class="sync-actions">
+        <button id="retry-save" class="button" hidden>Tentar novamente</button>
+        <button id="reload-cloud" class="button" hidden>Carregar versão da nuvem</button>
+      </div>
+      <div id="notebook" hidden><div id="question-list"></div></div>
+    </main>
+    <footer><p id="storage-note"></p><button class="text-button" id="reset-button" hidden>Recomeçar</button></footer>
+  </div>
+  <dialog id="export-dialog" aria-labelledby="export-title">
+    <form method="dialog" class="dialog-close-form"><button aria-label="Fechar" class="close-button">×</button></form>
+    <h2 id="export-title">Guardar respostas</h2>
+    <p>Exporte uma cópia para guardar ou continuar em outro dispositivo.</p>
+    <button id="download-md" class="export-option"><strong>Perguntas e respostas</strong><span>Baixar em Markdown</span></button>
+    <button id="print-button" class="export-option"><strong>Imprimir ou salvar em PDF</strong><span>Uma versão simples para leitura</span></button>
+    <button id="download-json" class="export-option"><strong>Backup completo</strong><span>Arquivo JSON, incluindo dados da versão anterior</span></button>
+    <button class="text-button" id="import-button">Importar backup</button>
+    <input type="file" id="import-file" accept=".json,application/json" hidden>
+  </dialog>
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title">
+    <h2 id="confirm-title">Substituir o caderno?</h2><p id="confirm-description"></p>
+    <div class="dialog-actions"><button id="confirm-cancel" class="button">Cancelar</button><button id="confirm-accept" class="button primary">Continuar</button></div>
+  </dialog>
+  <dialog id="edit-dialog" aria-labelledby="edit-title">
+    <form id="edit-form">
+      <h2 id="edit-title">Editar pergunta</h2>
+      <label for="question-text">Texto da pergunta</label>
+      <textarea id="question-text" rows="5" maxlength="2000" required></textarea>
+      <button id="restore-question" type="button" class="text-button" hidden>Restaurar texto original</button>
+      <div class="dialog-actions"><button id="cancel-edit" type="button" class="button">Cancelar</button><button type="submit" class="button primary">Salvar pergunta</button></div>
+    </form>
+  </dialog>
+  <dialog id="add-dialog" aria-labelledby="add-title">
+    <form id="add-form">
+      <h2 id="add-title">Adicionar pergunta</h2>
+      <label for="new-question-text">Texto da pergunta</label>
+      <textarea id="new-question-text" rows="5" maxlength="2000" required placeholder="Escreva a pergunta…"></textarea>
+      <div class="dialog-actions"><button id="cancel-add" type="button" class="button">Cancelar</button><button type="submit" class="button primary">Adicionar</button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <section id="print-content" aria-label="Relatório para impressão"></section>
+  <noscript>Ative o JavaScript para responder às perguntas e salvar seu caderno.</noscript>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "mapa-de-dados-reuniao",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Roteiro interativo para diagnóstico da arquitetura de dados e BI.",
+  "scripts": {
+    "dev": "npm run build && node server.mjs",
+    "start": "npm run build && node server.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright": "^1.63.0"
+  }
+}
