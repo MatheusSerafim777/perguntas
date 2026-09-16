@@ -140,10 +140,11 @@ function confirmAction(title, description, label) {
   $('#confirm-description').textContent = description;
   $('#confirm-accept').textContent = label;
   return new Promise(resolve => {
-    dialog.returnValue = '';
-    $('#confirm-cancel').onclick = () => dialog.close('cancel');
-    $('#confirm-accept').onclick = () => dialog.close('accept');
-    dialog.addEventListener('close', () => resolve(dialog.returnValue === 'accept'), { once: true });
+    let done = false;
+    const finish = value => { if (done) return; done = true; dialog.close(); resolve(value); };
+    $('#confirm-cancel').onclick = () => finish(false);
+    $('#confirm-accept').onclick = () => finish(true);
+    dialog.addEventListener('cancel', () => finish(false), { once: true });
     dialog.showModal();
   });
 }

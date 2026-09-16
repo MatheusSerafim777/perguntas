@@ -1,6 +1,6 @@
 # Perguntas e respostas
 
-Roteiro com 20 perguntas, edição dos enunciados e salvamento automático de perguntas e respostas. Não há login: as reuniões ficam no Supabase e são visíveis e editáveis por qualquer pessoa que acesse o aplicativo, pensado para uso por uma única pessoa/equipe.
+Um único questionário global de perguntas e respostas, salvo no Supabase. Não há login nem conceito de "reunião": todas as perguntas e respostas ficam numa única linha compartilhada, visível e editável por qualquer pessoa que acesse o aplicativo — pensado para uso por uma única pessoa/equipe. Dá para editar o texto de uma pergunta, excluir uma pergunta ou adicionar novas.
 
 ## Rodar
 
@@ -26,33 +26,37 @@ O build aceita também `SUPABASE_ANON_KEY`. Somente a URL e a chave publicável/
 
 ### Banco
 
-A estrutura está em duas migrações, aplicadas nesta ordem:
+A estrutura está em três migrações, aplicadas nesta ordem:
 
 1. `202609150001_meetings.sql` cria `meetings` (conteúdo do caderno, título, datas e revisão) com RLS por proprietário e controle de revisão que impede sobrescritas silenciosas entre dispositivos.
-2. `202609151200_remove_owner_scope.sql` remove a coluna de proprietário e as regras por conta, e libera leitura/escrita para o papel `anon` — sem login, qualquer dispositivo com a chave publicável/anon lê e grava as mesmas reuniões.
+2. `202609151200_remove_owner_scope.sql` remove a coluna de proprietário e as regras por conta, e libera leitura/escrita para o papel `anon` — sem login, qualquer dispositivo com a chave publicável/anon lê e grava a mesma linha.
+3. `202609151800_flatten_content.sql` atualiza a validação do conteúdo (campo `version` dentro do JSON) para aceitar o formato atual, que passou a guardar a própria lista de perguntas (permitindo excluir e adicionar perguntas) e descartou campos que nunca tiveram tela própria (classificação, evidência, responsável, próximo passo, dados da reunião e linha do tempo de rastreamento).
 
-A primeira migração foi aplicada ao projeto `zixieschltbwfdgljggq` pelo Supabase CLI usando a sessão autenticada, por `db query` (sem histórico no `db push`). **Não execute novamente `202609150001_meetings.sql` nesse projeto**: a tabela já existe. Aplique apenas a migração mais recente que ainda não rodou.
+As duas primeiras migrações foram aplicadas ao projeto `zixieschltbwfdgljggq` pelo Supabase CLI usando a sessão autenticada, por `db query` (sem histórico no `db push`); a terceira foi aplicada da mesma forma nesta sessão. **Não execute novamente uma migração já aplicada nesse projeto.** O aplicativo sempre usa uma única linha da tabela (a mais antiga); se houver mais de uma, as demais ficam sem uso.
 
-Para configurar outro projeto vazio, execute as duas migrações em ordem no SQL Editor, ou:
+Para configurar outro projeto vazio, execute as três migrações em ordem no SQL Editor, ou:
 
 ```sh
 npx supabase login
-npx supabase db query --linked --project-ref SEU_PROJECT_REF --file supabase/migrations/202609150001_meetings.sql
-npx supabase db query --linked --project-ref SEU_PROJECT_REF --file supabase/migrations/202609151200_remove_owner_scope.sql
+npx supabase link --project-ref SEU_PROJECT_REF
+npx supabase db query --linked --file supabase/migrations/202609150001_meetings.sql
+npx supabase db query --linked --file supabase/migrations/202609151200_remove_owner_scope.sql
+npx supabase db query --linked --file supabase/migrations/202609151800_flatten_content.sql
 ```
 
-> **Atenção:** a chave publicável/anon vai embutida no JavaScript enviado ao navegador — ela não é secreta. Como as políticas de RLS liberam leitura e escrita para qualquer requisição com essa chave, qualquer pessoa que descubra a URL do app consegue ler e alterar todas as reuniões. Isso é aceitável apenas porque o aplicativo é de uso pessoal/interno e não expõe dados sensíveis de terceiros; não reutilize este esquema para dados que precisem de controle de acesso por pessoa.
+> **Atenção:** a chave publicável/anon vai embutida no JavaScript enviado ao navegador — ela não é secreta. Como as políticas de RLS liberam leitura e escrita para qualquer requisição com essa chave, qualquer pessoa que descubra a URL do app consegue ler e alterar o questionário. Isso é aceitável apenas porque o aplicativo é de uso pessoal/interno e não expõe dados sensíveis de terceiros; não reutilize este esquema para dados que precisem de controle de acesso por pessoa.
 
 ### Uso
 
-- Não há tela de login: o app carrega a reunião mais recente automaticamente ao abrir.
-- **Editar pergunta** permite salvar, cancelar ou restaurar o texto original.
+- Não há tela de login nem seletor de reunião: o app carrega o questionário compartilhado automaticamente ao abrir.
+- **Editar pergunta** permite salvar, cancelar ou (para as perguntas originais) restaurar o texto padrão.
+- **Adicionar pergunta**, no topo de cada seção, cria uma nova pergunta nessa seção. **Excluir pergunta** remove a pergunta e a resposta registrada nela, com confirmação antes.
 - As alterações são salvas automaticamente. Aguarde **Salvo na nuvem** antes de fechar.
-- **Nova reunião** cria outro caderno; as anteriores continuam no seletor, compartilhado por todos os dispositivos.
-- Em caso de conflito, salve suas alterações como cópia ou carregue a versão da nuvem.
-- Falhas de rede mantêm as alterações na tela e, quando possível, em um rascunho local por reunião. Use **Tentar novamente** ou exporte um backup.
-- **Importar caderno deste navegador** copia o caderno antigo para uma nova reunião na nuvem.
-- Backups antigos continuam compatíveis. Campos extras da versão anterior são preservados no JSON.
+- Em caso de conflito com outro dispositivo, exporte um backup e carregue a versão da nuvem.
+- Falhas de rede mantêm as alterações na tela e, quando possível, em um rascunho local. Use **Tentar novamente** ou exporte um backup.
+- **Recomeçar**, no rodapé, apaga todas as respostas e restaura as perguntas originais (pede confirmação).
+- **Importar caderno deste navegador** substitui o questionário salvo pelo caderno local anterior (útil ao ativar o Supabase pela primeira vez).
+- Backups antigos (do formato anterior, com "reuniões" por conta) continuam compatíveis: as perguntas e respostas são recuperadas; os campos removidos são descartados.
 
 Sem as duas variáveis de configuração, o build usa o modo local, sem sincronização. Alterar `.env` exige um novo build.
 

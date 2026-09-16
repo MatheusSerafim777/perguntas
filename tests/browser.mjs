@@ -18,14 +18,17 @@ await context.route(config.url + '/**', async route => {
   const url = new URL(request.url());
   const headers = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' };
   const respond = (json, status = 200) => route.fulfill({ status, headers, json });
-  const notFoundSingle = { code: 'PGRST116', details: 'The result contains 0 rows', message: 'Cannot coerce the result to a single JSON object' };
   if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
   if (url.pathname !== '/rest/v1/meetings') return respond({ message: 'Unexpected path' }, 404);
   if (request.method() === 'GET') {
+    // .maybeSingle() sends no special Accept header: PostgREST always answers with an
+    // array, and the client itself unwraps 0/1 rows (erroring only when there are 2+).
     const [row] = rows.values();
-    return row ? respond(row) : respond(notFoundSingle, 406);
+    return respond(row ? [row] : []);
   }
   if (request.method() === 'POST') {
+    // .single() does request the single-object representation, so PostgREST replies
+    // with a bare object instead of an array.
     const body = request.postDataJSON();
     const row = makeRow(`meeting-${++nextId}`, body.content, body.title);
     rows.set(row.id, row);
@@ -37,9 +40,9 @@ await context.route(config.url + '/**', async route => {
     const id = url.searchParams.get('id')?.replace('eq.', '');
     const row = rows.get(id);
     const expected = Number(url.searchParams.get('revision')?.replace('eq.', ''));
-    if (!row || row.revision !== expected) return respond(notFoundSingle, 406);
+    if (!row || row.revision !== expected) return respond([]);
     Object.assign(row, request.postDataJSON()); row.revision++;
-    return respond({ revision: row.revision });
+    return respond([{ revision: row.revision }]);
   }
   return respond({ message: 'Unexpected method' }, 400);
 });
